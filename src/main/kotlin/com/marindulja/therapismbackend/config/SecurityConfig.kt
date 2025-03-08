@@ -6,8 +6,6 @@ import com.marindulja.therapismbackend.security.JwtUserDetailsService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager
-import org.springframework.security.authentication.AuthenticationProvider
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.http.SessionCreationPolicy
@@ -28,24 +26,15 @@ class SecurityConfig {
         config.authenticationManager
 
     @Bean
-    fun authenticationProvider(userRepository: UserRepository): AuthenticationProvider =
-        DaoAuthenticationProvider()
-            .also {
-                it.setUserDetailsService(userDetailsService(userRepository))
-                it.setPasswordEncoder(encoder())
-            }
-
-    @Bean
     fun securityFilterChain(
         http: HttpSecurity,
-        jwtAuthenticationFilter: JwtAuthorizationFilter,
-        authenticationProvider: AuthenticationProvider
+        jwtAuthenticationFilter: JwtAuthorizationFilter
     ): DefaultSecurityFilterChain {
         http
             .csrf { it.disable() }
             .authorizeHttpRequests {
                 it
-                    .requestMatchers("/api/auth", "/api/auth/refresh", "/error")
+                    .requestMatchers("/api/auth/**", "/error")
                     .permitAll()
                     .anyRequest()
                     .fullyAuthenticated()
@@ -53,7 +42,6 @@ class SecurityConfig {
             .sessionManagement {
                 it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
-            .authenticationProvider(authenticationProvider)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
         return http.build()
     }
