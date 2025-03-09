@@ -4,7 +4,7 @@ package com.marindulja.therapismbackend.models
 data class RegisterRequest(
     val email: String,
     val password: String,
-    val role: RoleType
+    val role: String,
 )
 data class AuthenticationRequest(
     val email: String,
