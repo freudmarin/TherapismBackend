@@ -1,5 +1,6 @@
 package com.marindulja.therapismbackend.config
 
+import com.marindulja.therapismbackend.filters.JwtAuthenticationEntryPoint
 import com.marindulja.therapismbackend.filters.JwtAuthorizationFilter
 import com.marindulja.therapismbackend.repositories.UserRepository
 import com.marindulja.therapismbackend.security.JwtUserDetailsService
@@ -31,22 +32,24 @@ class SecurityConfig {
     @Bean
     fun securityFilterChain(
         http: HttpSecurity,
-        jwtAuthenticationFilter: JwtAuthorizationFilter
+        jwtAuthenticationFilter: JwtAuthorizationFilter,
+        jwtAuthenticationEntryPoint: JwtAuthenticationEntryPoint
+
     ): DefaultSecurityFilterChain {
-        http
+        http.cors { corsConfigurationSource() }
             .csrf { it.disable() }
             .authorizeHttpRequests {
                 it
                     .requestMatchers("/api/auth/**", "/error")
                     .permitAll()
                     .anyRequest()
-                    .fullyAuthenticated()
+                    .permitAll()
             }
+            .exceptionHandling { it.authenticationEntryPoint(jwtAuthenticationEntryPoint) }
             .sessionManagement {
                 it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             }
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter::class.java)
-            .cors { corsConfigurationSource() }
         return http.build()
     }
 
@@ -56,10 +59,10 @@ class SecurityConfig {
     @Bean
     fun corsConfigurationSource(): CorsConfigurationSource {
         val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf("http://10.0.2.2:8080/api/") // Frontend URL
-        configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE")
-        configuration.allowedHeaders = listOf("*") // Allow all headers
-        configuration.allowCredentials = true
+        configuration.allowedOrigins = listOf("http://10.0.2.2:8080","http://192.168.1.1:8080", "http://localhost:8080")
+        configuration.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
+        configuration.allowedHeaders = listOf("Authorization", "Content-Type") // Allow all headers
+        configuration.exposedHeaders = listOf("Authorization"); // if you need to expose Authorization header
         val source = UrlBasedCorsConfigurationSource()
         source.registerCorsConfiguration("/**", configuration)
         return source
